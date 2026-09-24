@@ -95,7 +95,7 @@ metadata or a mismatched artwork path. It never fetches a URL or executes script
 | HTML | Maximum 2,000,000 UTF-8 bytes |
 | Name and collection | Required, maximum 256 characters each |
 | Artwork | Matching source origin and `/api/art/{collection}/{id}` path |
-| Traits | First 64 rows; names truncated to 128, values to 256 characters |
+| Traits | First 64 rows; names truncated to 128, values to 256 Unicode code points |
 
 This parses **Zecbit NFT page metadata**, not Zcash blocks, transactions,
 shielded data or ownership proofs. Artwork URLs are references, not verified

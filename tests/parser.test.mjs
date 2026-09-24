@@ -58,3 +58,11 @@ test("CLI emits JSON and fails on invalid or oversized input", () => {
     assert(result.stderr.trim());
   }
 });
+
+
+test("truncate traits at Unicode code point boundaries", () => {
+  const body = html.replace("Material", "a".repeat(127) + "💎extra").replace("Diamond &amp; Gold", "b".repeat(255) + "💎extra");
+  const item = parseZecbit(body, source);
+  assert.equal(item.attributes[0].trait, "a".repeat(127) + "💎");
+  assert.equal(item.attributes[0].value, "b".repeat(255) + "💎");
+});

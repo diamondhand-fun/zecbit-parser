@@ -28,8 +28,8 @@ export function parseZecbit(html, source) {
     throw new Error("Zecbit did not return a readable NFT. Try again later.");
   const attributes = Array.from(main.querySelectorAll("table tbody tr")).slice(0, 64).flatMap((row) => {
     const cells = row.querySelectorAll("td");
-    const trait = cells[0]?.textContent?.trim().slice(0, 128);
-    const value = cells[1]?.textContent?.trim().slice(0, 256);
+    const trait = Array.from(cells[0]?.textContent?.trim() ?? "").slice(0, 128).join("");
+    const value = Array.from(cells[1]?.textContent?.trim() ?? "").slice(0, 256).join("");
     return trait && value ? [{ trait, value }] : [];
   });
   return { ...identity, name, collectionName: collection, imageUrl: `https://zecbit.net${imagePath}`, attributes, fetchedAt: new Date().toISOString() };
