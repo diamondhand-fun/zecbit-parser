@@ -3,7 +3,7 @@ import { parseHTML } from "linkedom";
 export const MAX_HTML_BYTES = 2_000_000;
 
 export function zecbitItem(value) {
-  if (typeof value !== "string" || value.length > 2048) throw new Error("Invalid item URL.");
+  if (typeof value !== "string" || value.length > 2048 || /[\x00-\x1f\x7f\\]/.test(value)) throw new Error("Invalid item URL.");
   let url;
   try { url = new URL(value.trim()); } catch { throw new Error("Paste a Zecbit item URL."); }
   const path = /^\/item\/([a-z0-9][a-z0-9_-]{0,127})\/([1-9]\d{0,77})\/?$/.exec(url.pathname);

@@ -79,3 +79,9 @@ test("CLI accepts HTML files and provides help without stdin", () => {
     assert.match(help.stdout, /Usage:/);
   }
 });
+
+
+test("reject URL controls and backslashes before URL normalization", () => {
+  for (const value of [source.replace("zecbit", "zec\tbit"), source + "\n", source.replaceAll("/", "\\"), source + "?x=\0"]) assert.throws(() => zecbitItem(value));
+  assert.equal(zecbitItem("  " + source + "  ").sourceUrl, source);
+});
