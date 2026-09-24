@@ -40,6 +40,12 @@ test("bound UTF-8 input and trait output", () => {
   assert.equal(item.attributes[0].value.length, 256);
 });
 
+test("reject artwork URLs carrying embedded credentials", () => {
+  for (const prefix of ["https://user@zecbit.net", "https://user:password@zecbit.net"]) {
+    assert.throws(() => parseZecbit(html.replace("/api/art/example/42", prefix + "/api/art/example/42"), source), /readable NFT/);
+  }
+});
+
 test("CLI emits JSON and fails on invalid or oversized input", () => {
   const cli = new URL("../src/cli.mjs", import.meta.url);
   const run = (args, input) => spawnSync(process.execPath, [cli.pathname, ...args], { input, encoding: "utf8" });

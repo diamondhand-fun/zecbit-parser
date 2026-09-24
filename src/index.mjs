@@ -22,7 +22,7 @@ export function parseZecbit(html, source) {
   const collection = main?.querySelector(`a[href="/collection/${identity.collectionSlug}"]`)?.textContent?.replace(/^←\s*/, "").trim();
   const imagePath = `/api/art/${identity.collectionSlug}/${identity.itemId}`;
   const image = Array.from(main?.querySelectorAll("img") ?? []).find((img) => {
-    try { const url = new URL(img.getAttribute("src") ?? "", source); return url.origin === "https://zecbit.net" && url.pathname === imagePath; } catch { return false; }
+    try { const url = new URL(img.getAttribute("src") ?? "", source); return url.origin === "https://zecbit.net" && !url.username && !url.password && url.pathname === imagePath; } catch { return false; }
   });
   if (!name || !collection || !image || name.length > 256 || collection.length > 256)
     throw new Error("Zecbit did not return a readable NFT. Try again later.");
