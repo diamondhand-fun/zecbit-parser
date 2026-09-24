@@ -30,6 +30,10 @@ test("collector subprocess integration: canonical source, timestamp, errors and 
     await program('console.error("sensitive process details"); process.exit(1);');
     await assert.rejects(fetchNft(sourceUrl), /^Error: Collector failed or exceeded its resource limit\.$/);
     await assert.rejects(fetchNft("https://evil.test/"), /Use https/);
+    const stopped = AbortSignal.abort(new Error("caller cancelled"));
+    await assert.rejects(fetchNft(sourceUrl, { signal: stopped }), /caller cancelled/);
+    await program("setInterval(() => {}, 1000);");
+    await assert.rejects(fetchNft(sourceUrl, { signal: AbortSignal.timeout(100) }), error => error.name === "TimeoutError");
   } finally {
     if (previous === undefined) delete process.env.ZECBIT_PYTHON;
     else process.env.ZECBIT_PYTHON = previous;

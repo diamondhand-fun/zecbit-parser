@@ -4,15 +4,17 @@ import { fileURLToPath } from "node:url";
 import { parseZecbit, zecbitItem } from "./index.mjs";
 
 /** Fetch public HTML and artwork with the bounded Python collector. Node.js only. */
-export async function fetchNft(value) {
+export async function fetchNft(value, { signal } = {}) {
   const { sourceUrl } = zecbitItem(value);
+  signal?.throwIfAborted();
   const python = process.env.ZECBIT_PYTHON || fileURLToPath(new URL("../.venv/bin/python", import.meta.url));
   let stdout;
   try {
     ({ stdout } = await promisify(execFile)(python, [fileURLToPath(new URL("../collector/cli.py", import.meta.url)), sourceUrl], {
-      encoding: "utf8", maxBuffer: 16_000_000, timeout: 25_000,
+      encoding: "utf8", maxBuffer: 16_000_000, timeout: 25_000, signal,
     }));
   } catch (error) {
+    signal?.throwIfAborted();
     const code = error.stderr?.trim();
     if (/^(source_(blocked|unavailable|timeout|too_large)|invalid_(source|image|url)|not_found)$/.test(code)) throw new Error(code);
     if (error.code === "ENOENT") throw new Error("Install the Python collector dependencies or set ZECBIT_PYTHON.");

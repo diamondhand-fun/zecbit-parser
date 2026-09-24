@@ -40,6 +40,7 @@ outer timeout. Set `ZECBIT_PYTHON` to use another Python environment.
 import { fetchNft } from "./src/fetch.mjs";
 const item = await fetchNft("https://zecbit.net/item/zecbit-genesis/2540");
 console.log(item.name, item.attributes);
+// Optional: fetchNft(url, { signal: AbortSignal.timeout(10_000) })
 ```
 
 ## Parse an existing HTML snapshot
