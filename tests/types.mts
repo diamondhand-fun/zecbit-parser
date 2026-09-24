@@ -17,3 +17,9 @@ if (result.ok) {
 fetchNft("", { signal: "cancel" });
 // @ts-expect-error HTML must be a string.
 parseZecbit(12, "");
+
+fetchNft("", { includeImage: true, timeoutMs: 5000 }).then(result => {
+  const digest: string = result.image.sha256;
+  const mimeType: "image/png" = result.image.mimeType;
+});
+readText(new Response(""), 10, { fatal: true, signal: AbortSignal.timeout(1000) });

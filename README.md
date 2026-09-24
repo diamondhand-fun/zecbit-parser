@@ -44,6 +44,12 @@ console.log(item.name, item.attributes);
 // Optional: fetchNft(url, { signal: AbortSignal.timeout(10_000) })
 ```
 
+To keep the downloaded artwork, pass `{ includeImage: true }` or CLI
+`--include-image`. The result adds `image: { base64, mimeType, sha256 }`.
+The SHA-256 digest covers the exact PNG bytes checked by the Python collector;
+no second image request is made. Decode `image.base64` to save the PNG locally.
+The normal metadata-only result remains small.
+
 ## Parse an existing HTML snapshot
 
 The offline JavaScript parser needs only Node.js and `npm ci`:
