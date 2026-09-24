@@ -80,3 +80,10 @@ test("complete only the owning lease and refund a same-day unstarted attempt onc
   assert.equal(finishQuota(state, "owner", { refund: true, now: now + 86_400_000 }).fresh, 1);
   assert.equal(state.fresh, 1);
 });
+
+
+test("upstream responses report the shared budget rather than wallet limits", () => {
+  const result = advanceQuota(undefined, "upstream", now, "");
+  assert.deepEqual(result.quota, { upstreamRemaining: 99, resetsAt: Date.parse("2027-01-16T00:00:00Z") });
+  assert.equal("freshRemaining" in result.quota, false);
+});

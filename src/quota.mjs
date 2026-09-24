@@ -37,7 +37,9 @@ function advanceQuota(saved, kind, now, lease) {
       state.nextStart = now + importLimits.cooldownMs;
     }
   }
-  return { ok: true, state, quota: { requestsRemaining: importLimits.day - state.requests, freshRemaining: Math.max(0, importLimits.fresh - state.fresh), resetsAt: (day + 1) * 864e5 } };
+  return { ok: true, state, quota: kind === "upstream"
+    ? { upstreamRemaining: Math.max(0, importLimits.upstreamDay - state.fresh), resetsAt: (day + 1) * 864e5 }
+    : { requestsRemaining: importLimits.day - state.requests, freshRemaining: Math.max(0, importLimits.fresh - state.fresh), resetsAt: (day + 1) * 864e5 } };
 }
 export {
   advanceQuota,

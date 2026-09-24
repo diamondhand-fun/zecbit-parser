@@ -32,8 +32,9 @@ On denial, no state is returned: keep the saved value. `retryAfter` is seconds,
 rounded up, with a minimum of one. Invalid operation, timestamp or fresh lease
 identifier throws instead of consuming a budget. Damaged stored counters also
 throw; a server clock rollback into an older minute denies the operation rather
-than resetting its allowance. `quota` reports wallet limits;
-for the shared upstream key, use the state's `fresh` counter and `upstreamDay`.
+than resetting its allowance. `quota` reports wallet limits for `request` and `fresh`. For `upstream`, it
+returns `upstreamRemaining` and `resetsAt`, reflecting the shared 100-attempt
+budget rather than the five-attempt wallet budget.
 
 ## Storage integration
 
