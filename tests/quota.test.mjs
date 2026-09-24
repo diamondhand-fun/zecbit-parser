@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { advanceQuota, importLimits } from "../src/quota.mjs";
+import { advanceQuota, importLimits, finishQuota } from "../src/quota.mjs";
 
 const now = 1_800_000_000_000;
 
@@ -66,4 +66,17 @@ test("clock rollback and damaged persisted state cannot reset an allowance", () 
   for (const patch of [{ requests: NaN }, { fresh: -1 }, { minuteRequests: undefined }]) {
     assert.throws(() => advanceQuota({ ...state, ...patch }, "request", now, ""), /saved quota state/);
   }
+});
+
+
+test("complete only the owning lease and refund a same-day unstarted attempt once", () => {
+  const state = Object.freeze(advanceQuota(undefined, "fresh", now, "owner").state);
+  assert.equal(finishQuota(state, "stale", { refund: true, now }), state);
+  const done = finishQuota(state, "owner", { refund: true, now });
+  assert.equal(done.fresh, 0);
+  assert.equal(done.leaseUntil, 0);
+  assert.equal(done.nextStart, state.nextStart);
+  assert.equal(finishQuota(done, "owner", { refund: true, now }), done);
+  assert.equal(finishQuota(state, "owner", { refund: true, now: now + 86_400_000 }).fresh, 1);
+  assert.equal(state.fresh, 1);
 });

@@ -1,7 +1,10 @@
+function validateState(saved) {
+  if (saved && !["day", "minute", "requests", "minuteRequests", "fresh", "leaseUntil", "nextStart", "pausedUntil"].every(key => Number.isSafeInteger(saved[key]) && saved[key] >= 0)) throw new Error("Invalid saved quota state.");
+}
 const importLimits = Object.freeze({ minute: 10, day: 100, fresh: 5, upstreamDay: 100, leaseMs: 3e4, cooldownMs: 2e4, failureMs: 5 * 6e4 });
 function advanceQuota(saved, kind, now, lease) {
   if (!["request", "fresh", "upstream"].includes(kind) || !Number.isSafeInteger(now) || now < 0 || now > Number.MAX_SAFE_INTEGER - 864e5 || kind === "fresh" && (typeof lease !== "string" || !lease || lease.length > 128)) throw new Error("Invalid quota operation.");
-  if (saved && !["day", "minute", "requests", "minuteRequests", "fresh", "leaseUntil", "nextStart", "pausedUntil"].every(key => Number.isSafeInteger(saved[key]) && saved[key] >= 0)) throw new Error("Invalid saved quota state.");
+  validateState(saved);
   if (saved && now < saved.minute * 60_000) return { ok: false, error: "Server clock moved backwards. Retry shortly.", retryAfter: Math.max(1, Math.ceil((saved.minute * 60_000 - now) / 1000)) };
   const day = Math.floor(now / 864e5), minute = Math.floor(now / 6e4);
   const state = {
@@ -40,3 +43,11 @@ export {
   advanceQuota,
   importLimits
 };
+
+export function finishQuota(saved, lease, { refund = false, now = Date.now() } = {}) {
+  validateState(saved);
+  if (typeof lease !== "string" || !lease || typeof refund !== "boolean" || !Number.isSafeInteger(now) || now < 0) throw new Error("Invalid quota completion.");
+  if (!saved || saved.lease !== lease) return saved;
+  return { ...saved, lease: undefined, leaseUntil: 0,
+    fresh: refund && saved.day === Math.floor(now / 86_400_000) ? Math.max(0, saved.fresh - 1) : saved.fresh };
+}

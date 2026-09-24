@@ -42,8 +42,10 @@ In the application this happens inside a Cloudflare Durable Object with
 synchronous storage. A read and later asynchronous write without a transaction
 will race and is not sufficient.
 
-At completion, clear `lease` and `leaseUntil` only if the saved lease still
-matches your operation. Do not clear a newer operation's lease. The cooldown
+At completion, persist `finishQuota(saved, lease, { refund, now })` within the
+same serialized storage operation. Only the owning lease is cleared, and
+repeated completion cannot refund twice or clear a newer lease. Refunds apply
+only on the attempt's UTC day. The cooldown
 remains in force after completion. Refund `fresh` only when no upstream
 attempt started, under the same serialized storage operation.
 
