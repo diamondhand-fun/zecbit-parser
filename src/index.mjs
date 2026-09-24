@@ -26,6 +26,7 @@ export function parseZecbit(html, source) {
     try { declared = zecbitItem(new URL(link.getAttribute("href"), identity.sourceUrl).href).sourceUrl; } catch { /* Reject invalid declarations below. */ }
     if (declared !== identity.sourceUrl) throw new ParserError("Page canonical URL does not match the requested NFT.", "source_mismatch");
   }
+  for (const node of document.querySelectorAll("script, style, template")) node.remove();
   const main = document.querySelector("main");
   const name = main?.querySelector("h1")?.textContent?.trim();
   const collection = main?.querySelector(`a[href="/collection/${identity.collectionSlug}"]`)?.textContent?.replace(/^←\s*/, "").trim();

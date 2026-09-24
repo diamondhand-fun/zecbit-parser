@@ -103,3 +103,13 @@ test("expose parser error codes without changing existing error messages", () =>
     assert.throws(run, error => error instanceof ParserError && error.code === code && error.message.length > 0);
   }
 });
+
+
+test("exclude script, style and template contents from NFT text fields", () => {
+  const noise = '<script>tracking()</script><style>.ad { color:red }</style><template>inert text</template>';
+  const page = html.replace("Example #42", "Example #42" + noise).replace("Example Collection", noise + "Example Collection").replace("Material", "Material" + noise);
+  const { fetchedAt, ...actual } = parseZecbit(page, source);
+  const { fetchedAt: ignored, ...expected } = parseZecbit(html, source);
+  assert.deepEqual(actual, expected);
+  assert.throws(() => parseZecbit(html.replace("Example #42", noise), source), error => error.code === "invalid_metadata");
+});
