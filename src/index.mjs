@@ -29,7 +29,13 @@ export function parseZecbit(html, source) {
   for (const node of document.querySelectorAll("script, style, template")) node.remove();
   const main = document.querySelector("main");
   const name = main?.querySelector("h1")?.textContent?.trim();
-  const collection = main?.querySelector(`a[href="/collection/${identity.collectionSlug}"]`)?.textContent?.replace(/^←\s*/, "").trim();
+  const collectionLink = Array.from(main?.querySelectorAll("a[href]") ?? []).find(link => {
+    try {
+      const url = new URL(link.getAttribute("href"), identity.sourceUrl);
+      return url.origin === "https://zecbit.net" && !url.username && !url.password && url.pathname.replace(/\/$/, "") === `/collection/${identity.collectionSlug}`;
+    } catch { return false; }
+  });
+  const collection = collectionLink?.textContent?.replace(/^←\s*/, "").trim();
   const imagePath = `/api/art/${identity.collectionSlug}/${identity.itemId}`;
   const image = Array.from(main?.querySelectorAll("img") ?? []).find((img) => {
     try { const url = new URL(img.getAttribute("src") ?? "", source); return url.origin === "https://zecbit.net" && !url.username && !url.password && url.pathname === imagePath; } catch { return false; }

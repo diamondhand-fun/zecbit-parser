@@ -113,3 +113,13 @@ test("exclude script, style and template contents from NFT text fields", () => {
   assert.deepEqual(actual, expected);
   assert.throws(() => parseZecbit(html.replace("Example #42", noise), source), error => error.code === "invalid_metadata");
 });
+
+
+test("resolve collection navigation links without accepting foreign origins", () => {
+  for (const href of ["https://zecbit.net/collection/example", "/collection/example/", "/collection/example?ref=item", "../../collection/example"]) {
+    assert.equal(parseZecbit(html.replace('/collection/example', href), source).collectionName, "Example Collection");
+  }
+  for (const href of ["https://evil.test/collection/example", "https://user@zecbit.net/collection/example", "/collection/examples"]) {
+    assert.throws(() => parseZecbit(html.replace('/collection/example', href), source), error => error.code === "invalid_metadata");
+  }
+});
