@@ -8,6 +8,7 @@ import socket
 import struct
 import threading
 import time
+import zlib
 from contextlib import closing
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -62,6 +63,37 @@ def download(session, url, limit, content_type, deadline):
         return bytes(body)
 
 
+def validate_png(png):
+    if len(png) < 33 or png[:8] != b"\x89PNG\r\n\x1a\n":
+        raise SourceError("invalid_image")
+    offset, has_data = 8, False
+    while offset < len(png):
+        if len(png) - offset < 12:
+            raise SourceError("invalid_image")
+        size = struct.unpack(">I", png[offset:offset + 4])[0]
+        kind = png[offset + 4:offset + 8]
+        end = offset + 12 + size
+        if end > len(png) or zlib.crc32(png[offset + 4:end - 4]) != struct.unpack(">I", png[end - 4:end])[0]:
+            raise SourceError("invalid_image")
+        if offset == 8:
+            if kind != b"IHDR" or size != 13:
+                raise SourceError("invalid_image")
+            width, height, depth, color, compression, filtering, interlace = struct.unpack(">IIBBBBB", png[offset + 8:end - 4])
+            depths = {0: (1, 2, 4, 8, 16), 2: (8, 16), 3: (1, 2, 4, 8), 4: (8, 16), 6: (8, 16)}
+            if not 0 < width <= 4096 or not 0 < height <= 4096 or depth not in depths.get(color, ()) or compression or filtering or interlace not in (0, 1):
+                raise SourceError("invalid_image")
+        elif kind == b"IHDR":
+            raise SourceError("invalid_image")
+        if kind == b"IDAT" and size:
+            has_data = True
+        if kind == b"IEND":
+            if size or end != len(png) or not has_data:
+                raise SourceError("invalid_image")
+            return
+        offset = end
+    raise SourceError("invalid_image")
+
+
 def collect(source):
     match = ITEM.fullmatch(source) if isinstance(source, str) else None
     if not match:
@@ -77,8 +109,7 @@ def collect(source):
         if not re.search(r"<main[\s>]", html) or "<h1" not in html:
             raise SourceError("invalid_source")
         png = download(session, f"https://zecbit.net/api/art/{match[1]}/{match[2]}", 1_000_000, "image/png", deadline)
-    if len(png) < 24 or png[:8] != b"\x89PNG\r\n\x1a\n" or png[12:16] != b"IHDR" or not all(0 < n <= 4096 for n in struct.unpack(">II", png[16:24])):
-        raise SourceError("invalid_image")
+    validate_png(png)
     return {"sourceUrl": source, "html": html, "image": base64.b64encode(png).decode(), "imageType": "image/png", "fetchedAt": datetime.now(timezone.utc).isoformat()}
 
 

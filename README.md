@@ -30,7 +30,7 @@ python3 -m venv .venv
 npm run --silent fetch -- https://zecbit.net/item/zecbit-genesis/2540
 ```
 
-This downloads the item page and checks the artwork's PNG header, then emits
+This downloads the item page and checks PNG dimensions and chunk integrity, then emits
 parsed metadata as JSON. No wallet, service account or running HTTP server is
 required. The collector enforces byte limits in the libcurl callback, rejects
 redirects and stops on upstream access denials. The process has a 25-second

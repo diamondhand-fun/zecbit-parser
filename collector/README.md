@@ -45,8 +45,8 @@ fragment, credentials, port or trailing slash.
 | Client socket | 10-second timeout |
 
 Only fixed Zecbit item and artwork paths are fetched. Redirects are rejected.
-PNG checks cover its signature, IHDR marker and dimensions, not full decoding
-or integrity. Received bytes are bounded inside the libcurl callback without
+PNG checks cover dimensions, legal IHDR fields, chunk boundaries and CRCs,
+and require image data followed by a complete IEND. Pixels are not decoded. Received bytes are bounded inside the libcurl callback without
 a background streaming queue. Each request uses the remaining shared deadline.
 The Node fetch command additionally terminates the collector after 25 seconds.
 

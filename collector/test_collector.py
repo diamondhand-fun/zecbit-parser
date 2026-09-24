@@ -72,7 +72,20 @@ finally:
     server.shutdown(); server.server_close()
 
 # Synthetic 1x1 PNG; no upstream request or user artwork is needed.
-png = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jN7kAAAAASUVORK5CYII=")
+def png_chunk(kind, body):
+    return c.struct.pack(">I", len(body)) + kind + body + c.struct.pack(">I", c.zlib.crc32(kind + body))
+
+
+png = (b"\x89PNG\r\n\x1a\n" + png_chunk(b"IHDR", c.struct.pack(">IIBBBBB", 1, 1, 8, 6, 0, 0, 0))
+       + png_chunk(b"IDAT", c.zlib.compress(b"\0\xff\0\0\xff")) + png_chunk(b"IEND", b""))
+c.validate_png(png)
+for bad in [png[:24], png[:-1], png + b"trailing", png[:40] + bytes([png[40] ^ 1]) + png[41:], png[:33] + png_chunk(b"IEND", b"")]:
+    try:
+        c.validate_png(bad)
+        raise AssertionError("Incomplete or damaged PNG accepted")
+    except c.SourceError as error:
+        assert error.code == "invalid_image"
+
 page = Response()
 art = Response(body=png, kind="image/png")
 with patch.object(c.requests.Session, "get", side_effect=transport(page, art)) as get:

@@ -8,7 +8,7 @@ Checked on 2026-09-24.
 npm run --silent fetch -- https://zecbit.net/item/zecbit-genesis/2540
 ```
 
-The full download → artwork-header check → HTML parse path returned `ZEC #2540`,
+The full download → PNG integrity check → HTML parse path returned `ZEC #2540`,
 collection `ZecBit Genesis — Shielded` and six traits, including
 `Body: Diamond-skeleton`. The source returned 94,708 HTML bytes and 8,332 base64
 artwork characters during the initial live check. Source content can change.
@@ -30,6 +30,6 @@ npm test
 ```
 
 `npm audit` reported zero known JavaScript dependency vulnerabilities on the
-check date. PNG checks inspect the header and dimensions, not the complete
-compressed image or chunk checksums. Quota persistence and serialization must
+check date. PNG checks verify dimensions, chunk boundaries and CRCs; pixel decompression
+is outside this validator. Quota persistence and serialization must
 be supplied by the application, as described in [quotas](quotas.md).
