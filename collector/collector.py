@@ -140,6 +140,10 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(404, {"code": "not_found"})
         if not SECRET or not hmac.compare_digest(self.headers.get("Authorization", "").encode(), f"Bearer {SECRET}".encode()):
             return self.reply(401, {"code": "unauthorized"})
+        if len(self.headers.get_all("Content-Length", [])) != 1 or self.headers.get_all("Transfer-Encoding"):
+            return self.reply(400, {"code": "invalid_body"})
+        if len(self.headers.get_all("Content-Type", [])) != 1 or self.headers.get("Content-Type", "").split(";", 1)[0].strip().lower() != "application/json":
+            return self.reply(415, {"code": "invalid_content_type"})
         try:
             size = int(self.headers.get("Content-Length", "0"))
             if not 0 < size <= 2048 or self.headers.get("Transfer-Encoding"):

@@ -1,5 +1,6 @@
 """Run: venv/bin/python test_collector.py. No upstream traffic."""
 import json
+import http.client
 import base64
 import threading
 import time
@@ -61,13 +62,28 @@ server = c.Server(("127.0.0.1", 0), c.Handler)
 threading.Thread(target=server.serve_forever, daemon=True).start()
 try:
     for body, auth, expected in [(b"{}", "", 401), (b"x" * 2049, c.SECRET, 413), (b"[1]", c.SECRET, 400), (b"{}", c.SECRET, 400)]:
-        req = urllib.request.Request(f"http://127.0.0.1:{server.server_port}/collect", data=body, headers={"Authorization": f"Bearer {auth}"})
+        req = urllib.request.Request(f"http://127.0.0.1:{server.server_port}/collect", data=body, headers={"Authorization": f"Bearer {auth}", "Content-Type": "application/json"})
         try:
             urllib.request.urlopen(req)
             raise AssertionError("Invalid request accepted")
         except urllib.error.HTTPError as e:
             assert e.code == expected, e.code
             assert json.load(e)["code"]
+    for headers, expected in [
+        ([("Content-Length", "2"), ("Content-Length", "2"), ("Content-Type", "application/json")], 400),
+        ([("Content-Length", "2"), ("Transfer-Encoding", "chunked"), ("Content-Type", "application/json")], 400),
+        ([("Content-Length", "2"), ("Content-Type", "text/plain")], 415),
+    ]:
+        connection = http.client.HTTPConnection("127.0.0.1", server.server_port, timeout=2)
+        connection.putrequest("POST", "/collect")
+        connection.putheader("Authorization", f"Bearer {c.SECRET}")
+        for key, value in headers:
+            connection.putheader(key, value)
+        connection.endheaders(b"{}")
+        response = connection.getresponse()
+        assert response.status == expected
+        response.read()
+        connection.close()
 finally:
     server.shutdown(); server.server_close()
 

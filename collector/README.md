@@ -21,7 +21,8 @@ Keep the generated secret in your runtime's secret store. The server refuses
 to start with fewer than 32 characters. No secret is included in this repository.
 
 `GET http://127.0.0.1:8787/health` returns `{"ok": true}`.
-`POST /collect` requires `Authorization: Bearer <your secret>` and this body:
+`POST /collect` requires `Authorization: Bearer <your secret>`, `Content-Type: application/json`,
+one Content-Length header and this body:
 
 ```json
 {"sourceUrl":"https://zecbit.net/item/zecbit-genesis/2540"}
@@ -58,6 +59,7 @@ The Node fetch command additionally terminates the collector after 25 seconds.
 | 401 | `unauthorized` |
 | 404 | `not_found` |
 | 413 | `invalid_body` |
+| 415 | `invalid_content_type` |
 | 502 | `invalid_source`, `invalid_image`, `source_too_large` |
 | 503 | `source_blocked`; `Retry-After: 300` |
 | 504 | `source_timeout` |
