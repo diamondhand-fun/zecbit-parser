@@ -128,3 +128,7 @@ Maintained by [Diamond Hand](https://github.com/diamondhand-fun).
 
 TypeScript declarations are included for the parser, fetch, HTTP and quota
 exports. `npm test` also checks the public package imports and quota narrowing.
+
+Parser validation throws `ParserError` with a stable `code`: `invalid_url`,
+`invalid_html`, `source_mismatch` or `invalid_metadata`. Branch on `error.code`
+to distinguish a bad request from an upstream page that needs attention.

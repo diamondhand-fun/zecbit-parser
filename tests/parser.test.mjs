@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
-import { parseZecbit, zecbitItem, MAX_HTML_BYTES } from "../src/index.mjs";
+import { parseZecbit, zecbitItem, MAX_HTML_BYTES, ParserError } from "../src/index.mjs";
 
 const html = readFileSync(new URL("./item.html", import.meta.url), "utf8");
 const source = "https://zecbit.net/item/example/42";
@@ -95,4 +95,11 @@ test("bind declared canonical page identity to the requested NFT", () => {
     assert.throws(() => parseZecbit(page(href), source), /canonical URL/);
   }
   assert.throws(() => parseZecbit(page(source).replace("</head>", '<link rel="canonical" href="/item/example/43"></head>'), source), /canonical URL/);
+});
+
+
+test("expose parser error codes without changing existing error messages", () => {
+  for (const [run, code] of [[() => zecbitItem("bad"), "invalid_url"], [() => parseZecbit(null, source), "invalid_html"], [() => parseZecbit("<main/>", source), "invalid_metadata"], [() => parseZecbit(html.replace("</head>", '<link rel="canonical" href="/item/example/99"></head>'), source), "source_mismatch"]]) {
+    assert.throws(run, error => error instanceof ParserError && error.code === code && error.message.length > 0);
+  }
 });

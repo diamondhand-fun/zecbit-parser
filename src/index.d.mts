@@ -1,3 +1,8 @@
+export type ParserErrorCode = "invalid_url" | "invalid_html" | "source_mismatch" | "invalid_metadata";
+export class ParserError extends Error {
+  readonly code: ParserErrorCode;
+  constructor(message: string, code: ParserErrorCode);
+}
 export type ItemIdentity = { sourceUrl: string; collectionSlug: string; itemId: string };
 export type NftItem = ItemIdentity & {
   name: string;
