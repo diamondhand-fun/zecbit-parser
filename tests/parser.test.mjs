@@ -85,3 +85,14 @@ test("reject URL controls and backslashes before URL normalization", () => {
   for (const value of [source.replace("zecbit", "zec\tbit"), source + "\n", source.replaceAll("/", "\\"), source + "?x=\0"]) assert.throws(() => zecbitItem(value));
   assert.equal(zecbitItem("  " + source + "  ").sourceUrl, source);
 });
+
+
+test("bind declared canonical page identity to the requested NFT", () => {
+  const page = href => html.replace("</head>", `<link rel="canonical" href="${href}"></head>`);
+  assert.equal(parseZecbit(page("/item/example/42"), source).itemId, "42");
+  for (const href of ["/item/example/43", "https://evil.test/item/example/42", "", "javascript:void(0)"]) {
+    if (href === "") continue; // An empty relative URL denotes this same page.
+    assert.throws(() => parseZecbit(page(href), source), /canonical URL/);
+  }
+  assert.throws(() => parseZecbit(page(source).replace("</head>", '<link rel="canonical" href="/item/example/43"></head>'), source), /canonical URL/);
+});

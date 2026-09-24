@@ -85,7 +85,7 @@ console.log(item.attributes);
 `zecbitItem(url)` validates and canonicalizes the item reference, removing
 query parameters and fragments. IDs remain strings to preserve large values.
 `parseZecbit(html, url)` throws on invalid URLs, oversized HTML, missing
-metadata or a mismatched artwork path. It never fetches a URL or executes scripts.
+metadata, a conflicting declared canonical URL or a mismatched artwork path. It never fetches a URL or executes scripts.
 
 ## Boundaries
 

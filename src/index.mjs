@@ -17,6 +17,11 @@ export function parseZecbit(html, source) {
     throw new Error("HTML exceeds 2 MB or is not a string.");
   const identity = zecbitItem(source);
   const { document } = parseHTML(html);
+  for (const link of document.querySelectorAll('link[rel~="canonical"]')) {
+    let declared;
+    try { declared = zecbitItem(new URL(link.getAttribute("href"), identity.sourceUrl).href).sourceUrl; } catch { /* Reject invalid declarations below. */ }
+    if (declared !== identity.sourceUrl) throw new Error("Page canonical URL does not match the requested NFT.");
+  }
   const main = document.querySelector("main");
   const name = main?.querySelector("h1")?.textContent?.trim();
   const collection = main?.querySelector(`a[href="/collection/${identity.collectionSlug}"]`)?.textContent?.replace(/^←\s*/, "").trim();
