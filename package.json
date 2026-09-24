@@ -6,7 +6,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.mjs",
-    "./quota": "./src/quota.mjs"
+    "./quota": "./src/quota.mjs",
+    "./http": "./src/http.mjs"
   },
   "scripts": { "test": "node --test", "parse": "node src/cli.mjs" },
   "engines": { "node": ">=22" },
