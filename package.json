@@ -4,7 +4,10 @@
   "private": true,
   "description": "Bounded, offline Zecbit NFT metadata parsing by Diamond Hand",
   "type": "module",
-  "exports": "./src/index.mjs",
+  "exports": {
+    ".": "./src/index.mjs",
+    "./quota": "./src/quota.mjs"
+  },
   "scripts": { "test": "node --test", "parse": "node src/cli.mjs" },
   "engines": { "node": ">=22" },
   "dependencies": { "linkedom": "0.18.13" }

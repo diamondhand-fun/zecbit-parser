@@ -9,6 +9,8 @@ artwork URL and traits.
 
 For bounded HTML and artwork retrieval, use the optional Python
 [collector](collector/README.md). The JavaScript parser remains offline.
+The extracted [quota state machine](docs/quotas.md) limits cached requests,
+fresh imports and shared upstream traffic without a framework or database dependency.
 
 ## Run it
 
