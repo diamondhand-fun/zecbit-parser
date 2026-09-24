@@ -70,3 +70,18 @@ test("abort stalled reads, preserve the reason and release the stream", async ()
   await assert.rejects(readText(untouched, 100, { signal: controller.signal }), error => error === reason);
   assert.equal(await untouched.text(), "hello");
 });
+
+
+test("optionally reject corrupt UTF-8 including incomplete trailing characters", async () => {
+  for (const bytes of [[0xff], [0xe2, 0x82]]) {
+    const body = new ReadableStream({ start(controller) {
+      for (const byte of bytes) controller.enqueue(Uint8Array.of(byte));
+      controller.close();
+    } });
+    await assert.rejects(readText(new Response(body), 10, { fatal: true }), TypeError);
+    assert.equal(body.locked, false);
+    assert.match(await readText(new Response(Uint8Array.from(bytes)), 10), /�/);
+  }
+  assert.equal(await readText(new Response("💎"), 4, { fatal: true }), "💎");
+  await assert.rejects(readText(new Response(""), 0, { fatal: "yes" }), /decoding option/);
+});

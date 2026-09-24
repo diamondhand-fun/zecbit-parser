@@ -19,7 +19,8 @@ The same function accepts a Fetch API `Response`. It counts actual streamed
 bytes rather than trusting `Content-Length`, decodes UTF-8 across chunk
 boundaries, cancels the stream on overflow and releases its reader lock.
 Network/read errors propagate unchanged. Invalid UTF-8 follows the standard
-TextDecoder replacement behavior; an absent body throws and an empty stream
+TextDecoder replacement behavior by default. Use `{ fatal: true }` to reject
+corrupt input, including a truncated final character; an absent body throws and an empty stream
 returns an empty string.
 
 Pass `{ signal: AbortSignal.timeout(5000) }` as the third argument to bound
