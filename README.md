@@ -34,7 +34,8 @@ This downloads the item page and checks PNG dimensions and chunk integrity, then
 parsed metadata as JSON. No wallet, service account or running HTTP server is
 required. The collector enforces byte limits in the libcurl callback, rejects
 redirects and stops on upstream access denials. The process has a 25-second
-outer timeout. Set `ZECBIT_PYTHON` to use another Python environment.
+outer timeout. Shorten it with `fetchNft(url, { timeoutMs: 5000 })` or
+`npm run --silent fetch -- --timeout 5000 <url>` (1–25,000 ms). Set `ZECBIT_PYTHON` to use another Python environment.
 
 ```js
 import { fetchNft } from "./src/fetch.mjs";

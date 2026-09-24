@@ -32,7 +32,9 @@ test("collector subprocess integration: canonical source, timestamp, errors and 
     await assert.rejects(fetchNft("https://evil.test/"), /Use https/);
     const stopped = AbortSignal.abort(new Error("caller cancelled"));
     await assert.rejects(fetchNft(sourceUrl, { signal: stopped }), /caller cancelled/);
+    for (const timeoutMs of [0, -1, 1.5, Infinity, 25_001]) await assert.rejects(fetchNft(sourceUrl, { timeoutMs }), /Collector timeout/);
     await program("setInterval(() => {}, 1000);");
+    await assert.rejects(fetchNft(sourceUrl, { timeoutMs: 100 }), /^Error: source_timeout$/);
     await assert.rejects(fetchNft(sourceUrl, { signal: AbortSignal.timeout(100) }), error => error.name === "TimeoutError");
   } finally {
     if (previous === undefined) delete process.env.ZECBIT_PYTHON;
