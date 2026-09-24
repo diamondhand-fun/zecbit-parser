@@ -39,3 +39,18 @@ test("handle request bodies, empty streams and invalid limits", async () => {
     await assert.rejects(readText(new Response(""), limit), /Invalid byte limit/);
   }
 });
+
+test("a stalled cancellation cannot hide the size-limit failure", async () => {
+  const body = new ReadableStream({
+    pull(controller) { controller.enqueue(new Uint8Array(2)); },
+    cancel() { return new Promise(() => {}); },
+  });
+  let timer;
+  try {
+    await assert.rejects(Promise.race([
+      readText(new Response(body), 1),
+      new Promise((_, reject) => { timer = setTimeout(() => reject(new Error("cleanup hung")), 500); }),
+    ]), /size limit/);
+    assert.equal(body.locked, false);
+  } finally { clearTimeout(timer); }
+});

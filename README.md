@@ -19,13 +19,34 @@ fresh imports and shared upstream traffic without a framework or database depend
 The [bounded HTTP reader](docs/bounded-http.md) consumes Fetch API bodies with
 byte limits and streaming UTF-8 decoding.
 
-## Run it
+## Fetch a real NFT
 
-Requires Node.js 22 or newer.
+Requires Node.js 22+ and Python 3.11+. From the repository root:
 
 ```sh
 npm ci --ignore-scripts
-npm test
+python3 -m venv .venv
+.venv/bin/python -m pip install -r collector/requirements.txt
+npm run --silent fetch -- https://zecbit.net/item/zecbit-genesis/2540
+```
+
+This downloads the item page and checks the artwork's PNG header, then emits
+parsed metadata as JSON. No wallet, service account or running HTTP server is
+required. The collector enforces byte limits in the libcurl callback, rejects
+redirects and stops on upstream access denials. The process has a 25-second
+outer timeout. Set `ZECBIT_PYTHON` to use another Python environment.
+
+```js
+import { fetchNft } from "./src/fetch.mjs";
+const item = await fetchNft("https://zecbit.net/item/zecbit-genesis/2540");
+console.log(item.name, item.attributes);
+```
+
+## Parse an existing HTML snapshot
+
+The offline JavaScript parser needs only Node.js and `npm ci`:
+
+```sh
 npm run --silent parse -- https://zecbit.net/item/example/42 < tests/item.html
 ```
 
@@ -45,8 +66,8 @@ npm run --silent parse -- https://zecbit.net/item/example/42 < tests/item.html
 }
 ```
 
-The example is synthetic. `fetchedAt` records parsing time for compatibility
-with the original importer; it does not prove when the HTML was downloaded.
+The example shows the included fixture. `parseZecbit` sets `fetchedAt` to parsing
+time; `fetchNft` preserves the collector timestamp from the actual download.
 
 ## Use the parser
 
@@ -83,5 +104,15 @@ The selectors follow Zecbit's item-page markup and may need updates if it change
 Production deployment, credentials and wallet logic
 are deliberately outside this repository. The package is marked private to
 prevent accidental npm publication.
+
+## Verification
+
+```sh
+npm test
+.venv/bin/python collector/test_collector.py
+```
+
+CI runs the Node checks plus collector checks against a local HTTP source.
+See [validation notes](docs/validation.md) for live checks and exact boundaries.
 
 Maintained by [Diamond Hand](https://github.com/diamondhand-fun).

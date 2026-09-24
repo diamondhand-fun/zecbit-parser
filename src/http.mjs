@@ -14,7 +14,7 @@ export async function readText(message, limit) {
       text += decoder.decode(value, { stream: true });
     }
   } finally {
-    try { await reader.cancel(); } catch { /* Keep the original read/limit error. */ }
+    void reader.cancel().catch(() => {}); // Cleanup must not delay failure on an oversized body.
     reader.releaseLock();
   }
 }

@@ -30,7 +30,9 @@ bursts across minute boundaries can exceed 10 requests in a rolling minute.
 On success, the returned `state` is a new object. The input is never mutated.
 On denial, no state is returned: keep the saved value. `retryAfter` is seconds,
 rounded up, with a minimum of one. Invalid operation, timestamp or fresh lease
-identifier throws instead of consuming a budget. `quota` reports wallet limits;
+identifier throws instead of consuming a budget. Damaged stored counters also
+throw; a server clock rollback into an older minute denies the operation rather
+than resetting its allowance. `quota` reports wallet limits;
 for the shared upstream key, use the state's `fresh` counter and `upstreamDay`.
 
 ## Storage integration

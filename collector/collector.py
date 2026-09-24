@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from curl_cffi import requests
+from curl_cffi.curl import CURL_WRITEFUNC_ERROR
 
 ITEM = re.compile(r"https://zecbit\.net/item/([a-z0-9][a-z0-9_-]{0,127})/([1-9][0-9]{0,77})")
 SECRET = os.environ.get("IMPORT_COLLECTOR_SECRET", "")
@@ -27,22 +28,38 @@ def download(session, url, limit, content_type, deadline):
     remaining = deadline - time.monotonic()
     if remaining <= 0:
         raise SourceError("source_timeout", 504)
-    with closing(session.get(url, stream=True, allow_redirects=False, timeout=min(10, remaining))) as response:
+    body = bytearray()
+    failure = None
+
+    def receive(chunk):
+        nonlocal failure
+        if time.monotonic() > deadline:
+            failure = SourceError("source_timeout", 504)
+        elif len(body) + len(chunk) > limit:
+            failure = SourceError("source_too_large")
+        if failure:
+            return CURL_WRITEFUNC_ERROR
+        body.extend(chunk)
+        return len(chunk)
+
+    try:
+        # Enforce bounds in libcurl's callback, before any Python streaming queue.
+        response = session.get(url, content_callback=receive, allow_redirects=False, timeout=min(10, remaining))
+    except requests.RequestsError:
+        if failure:
+            raise failure from None
+        raise
+    with closing(response):
         if response.status_code in (403, 429):
             raise SourceError("source_blocked", 503)
         if response.status_code == 404:
             raise SourceError("not_found", 404)
-        if response.status_code != 200 or content_type not in response.headers.get("content-type", ""):
+        actual_type = response.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+        if response.status_code != 200 or actual_type != content_type:
             raise SourceError("invalid_source")
-        chunks, size = [], 0
-        for chunk in response.iter_content():
-            size += len(chunk)
-            if size > limit:
-                raise SourceError("source_too_large")
-            if time.monotonic() > deadline:
-                raise SourceError("source_timeout", 504)
-            chunks.append(chunk)
-        return b"".join(chunks)
+        if time.monotonic() > deadline:
+            raise SourceError("source_timeout", 504)
+        return bytes(body)
 
 
 def collect(source):
@@ -51,7 +68,10 @@ def collect(source):
         raise SourceError("invalid_url", 400)
     deadline = time.monotonic() + 20
     with requests.Session(impersonate="chrome142", trust_env=False) as session:
-        html = download(session, source, 2_000_000, "text/html", deadline).decode("utf-8")
+        try:
+            html = download(session, source, 2_000_000, "text/html", deadline).decode("utf-8")
+        except UnicodeDecodeError:
+            raise SourceError("invalid_source") from None
         if "Vercel Security Checkpoint" in html:
             raise SourceError("source_blocked", 503)
         if not re.search(r"<main[\s>]", html) or "<h1" not in html:
@@ -93,7 +113,10 @@ class Handler(BaseHTTPRequestHandler):
             size = int(self.headers.get("Content-Length", "0"))
             if not 0 < size <= 2048 or self.headers.get("Transfer-Encoding"):
                 return self.reply(413, {"code": "invalid_body"})
-            data = json.loads(self.rfile.read(size))
+            body = self.rfile.read(size)
+            if len(body) != size:
+                return self.reply(400, {"code": "invalid_body"})
+            data = json.loads(body)
             if not isinstance(data, dict):
                 return self.reply(400, {"code": "invalid_body"})
             self.reply(200, collect(data.get("sourceUrl")))

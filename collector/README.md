@@ -46,8 +46,9 @@ fragment, credentials, port or trailing slash.
 
 Only fixed Zecbit item and artwork paths are fetched. Redirects are rejected.
 PNG checks cover its signature, IHDR marker and dimensions, not full decoding
-or integrity. A read already in progress may finish after the shared deadline;
-the deadline is checked before requests and while consuming chunks.
+or integrity. Received bytes are bounded inside the libcurl callback without
+a background streaming queue. Each request uses the remaining shared deadline.
+The Node fetch command additionally terminates the collector after 25 seconds.
 
 ## Errors
 
@@ -62,5 +63,5 @@ the deadline is checked before requests and while consuming chunks.
 | 504 | `source_timeout` |
 
 When all connection slots are occupied, the server returns an empty 503
-with `Retry-After: 5`. All tests mock upstream transport; they contact only
+with `Retry-After: 5`. Tests cover mocked error paths and actual libcurl transfers against
 a temporary local HTTP server. No live scraping is needed to test changes.

@@ -7,9 +7,10 @@
   "exports": {
     ".": "./src/index.mjs",
     "./quota": "./src/quota.mjs",
-    "./http": "./src/http.mjs"
+    "./http": "./src/http.mjs",
+    "./fetch": "./src/fetch.mjs"
   },
-  "scripts": { "test": "node --test", "parse": "node src/cli.mjs" },
+  "scripts": { "test": "node --test", "parse": "node src/cli.mjs", "fetch": "node src/fetch-cli.mjs" },
   "engines": { "node": ">=22" },
   "dependencies": { "linkedom": "0.18.13" }
 }

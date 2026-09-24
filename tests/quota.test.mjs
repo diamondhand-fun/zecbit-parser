@@ -59,3 +59,11 @@ test("reject malformed operations and lease identifiers", () => {
     assert.throws(() => advanceQuota(undefined, kind, time, lease), /Invalid quota/);
   }
 });
+
+test("clock rollback and damaged persisted state cannot reset an allowance", () => {
+  const state = advanceQuota(undefined, "request", now, "").state;
+  assert.equal(advanceQuota(state, "request", now - 60_000, "").ok, false);
+  for (const patch of [{ requests: NaN }, { fresh: -1 }, { minuteRequests: undefined }]) {
+    assert.throws(() => advanceQuota({ ...state, ...patch }, "request", now, ""), /saved quota state/);
+  }
+});
