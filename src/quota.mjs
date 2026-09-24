@@ -60,3 +60,10 @@ export function finishQuota(saved, lease, { refund = false, now = Date.now() } =
   return { ...saved, lease: undefined, leaseUntil: 0,
     fresh: refund && saved.day === Math.floor(now / 86_400_000) ? Math.max(0, saved.fresh - 1) : saved.fresh };
 }
+
+/** Pause fresh/upstream traffic after an access denial; cached reads stay available. */
+export function pauseQuota(saved, now = Date.now()) {
+  validateState(saved);
+  if (!saved || !Number.isSafeInteger(now) || now < 0 || now > Number.MAX_SAFE_INTEGER - importLimits.failureMs || now < saved.minute * 60_000) throw new Error("Invalid quota pause.");
+  return { ...saved, pausedUntil: Math.max(saved.pausedUntil, now + importLimits.failureMs) };
+}

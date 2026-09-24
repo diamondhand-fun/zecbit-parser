@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { advanceQuota, importLimits, finishQuota } from "../src/quota.mjs";
+import { advanceQuota, importLimits, finishQuota, pauseQuota } from "../src/quota.mjs";
 
 const now = 1_800_000_000_000;
 
@@ -97,4 +97,19 @@ test("fail closed on corrupt persisted buckets, counters and lease ownership", (
   }
   assert.throws(() => finishQuota(state, "owner", { refund: true, now: now - 60_000 }), /quota completion/);
   assert.equal(finishQuota(undefined, "owner", { now }), undefined);
+});
+
+
+test("pause fresh upstream work without consuming budget or blocking cache hits", () => {
+  const state = Object.freeze(advanceQuota(undefined, "upstream", now, "").state);
+  const paused = pauseQuota(state, now);
+  assert.equal(paused.pausedUntil, now + importLimits.failureMs);
+  assert.equal(paused.fresh, state.fresh);
+  assert.equal(state.pausedUntil, 0);
+  assert.equal(advanceQuota(paused, "upstream", now, "").retryAfter, 300);
+  assert.equal(advanceQuota(paused, "request", now, "").ok, true);
+  assert.equal(advanceQuota(paused, "upstream", paused.pausedUntil, "").ok, true);
+  const extended = pauseQuota(paused, now + 1000);
+  assert.equal(pauseQuota(extended, now).pausedUntil, extended.pausedUntil);
+  for (const bad of [-1, NaN, Number.MAX_SAFE_INTEGER, now - 60_000]) assert.throws(() => pauseQuota(state, bad));
 });

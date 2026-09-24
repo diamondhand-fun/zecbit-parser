@@ -59,3 +59,8 @@ Persisted state fails closed on inconsistent UTC buckets, out-of-range counters
 or missing lease ownership. Use `undefined` only for a genuinely absent record;
 `null`, `false` and malformed stored data are errors rather than quota resets.
 Lease completion rejects clock rollback instead of refunding against stale time.
+
+On `source_blocked`, persist `pauseQuota(state, Date.now())` in the same storage
+transaction used for quota updates. It pauses fresh and shared upstream attempts
+for five minutes, preserves counters and leases, and never shortens an existing
+pause. Cached request allowance remains available.

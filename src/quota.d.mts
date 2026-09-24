@@ -12,3 +12,5 @@ export function advanceQuota(saved: QuotaState | undefined, kind: "request" | "f
 export function advanceQuota(saved: QuotaState | undefined, kind: "upstream", now: number, lease: string): QuotaResult<UpstreamQuota>;
 export function advanceQuota(saved: QuotaState | undefined, kind: "request" | "fresh" | "upstream", now: number, lease: string): QuotaResult;
 export function finishQuota(saved: QuotaState | undefined, lease: string, options?: { refund?: boolean; now?: number }): QuotaState | undefined;
+
+export function pauseQuota(saved: QuotaState, now?: number): QuotaState;
