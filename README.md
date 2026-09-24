@@ -7,6 +7,9 @@ import flow. One runtime dependency, no browser, no wallet, no credentials.
 Bring an HTML snapshot; get a canonical item reference, name, collection,
 artwork URL and traits.
 
+For bounded HTML and artwork retrieval, use the optional Python
+[collector](collector/README.md). The JavaScript parser remains offline.
+
 ## Run it
 
 Requires Node.js 22 or newer.
@@ -68,7 +71,7 @@ shielded data or ownership proofs. Artwork URLs are references, not verified
 image bytes. Metadata is untrusted text: render it as text, never raw HTML.
 The selectors follow Zecbit's item-page markup and may need updates if it changes.
 
-The private collector, production deployment, credentials and wallet logic
+Production deployment, credentials and wallet logic
 are deliberately outside this repository. The package is marked private to
 prevent accidental npm publication.
 
