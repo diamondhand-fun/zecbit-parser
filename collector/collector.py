@@ -15,6 +15,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from curl_cffi import requests
 from curl_cffi.curl import CURL_WRITEFUNC_ERROR
+from curl_cffi.requests.exceptions import Timeout
 
 ITEM = re.compile(r"https://zecbit\.net/item/([a-z0-9][a-z0-9_-]{0,127})/([1-9][0-9]{0,77})")
 SECRET = os.environ.get("IMPORT_COLLECTOR_SECRET", "")
@@ -46,10 +47,12 @@ def download(session, url, limit, content_type, deadline):
     try:
         # Enforce bounds in libcurl's callback, before any Python streaming queue.
         response = session.get(url, content_callback=receive, allow_redirects=False, timeout=min(10, remaining))
-    except requests.RequestsError:
+    except requests.RequestsError as error:
         if failure:
             raise failure from None
-        raise
+        if isinstance(error, Timeout):
+            raise SourceError("source_timeout", 504) from None
+        raise SourceError("source_unavailable", 502) from None
     with closing(response):
         if response.status_code in (403, 429):
             raise SourceError("source_blocked", 503)
@@ -171,8 +174,10 @@ class Handler(BaseHTTPRequestHandler):
             self.reply(error.status, {"code": error.code})
         except (ValueError, UnicodeError):
             self.reply(400, {"code": "invalid_body"})
-        except (requests.RequestsError, socket.timeout):
-            self.reply(504, {"code": "source_timeout"})
+        except requests.RequestsError:
+            self.reply(502, {"code": "source_unavailable"})
+        except socket.timeout:
+            self.reply(408, {"code": "request_timeout"})
 
 
 class Server(ThreadingHTTPServer):

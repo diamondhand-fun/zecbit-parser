@@ -72,3 +72,7 @@ PNG validation also rejects unknown critical chunks, interrupted IDAT sequences,
 and invalid or misplaced indexed-color palettes, following the
 [PNG critical chunk rules](https://www.w3.org/TR/png-3/#11PLTE). It checks the
 container structure and CRCs, without decompressing the pixel stream.
+
+Transport failures use `source_unavailable` (502); expired upstream transfers use
+`source_timeout` (504). A stalled incoming HTTP request body returns
+`request_timeout` (408). Provider exception details are not returned to callers.

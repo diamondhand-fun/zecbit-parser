@@ -180,3 +180,13 @@ for bad in [
         raise AssertionError("Invalid critical PNG structure accepted")
     except c.SourceError as error:
         assert error.code == "invalid_image"
+
+# DNS/TLS/connection failures must not masquerade as timeouts or leak details.
+for failure, code, status in [(c.Timeout("private upstream detail"), "source_timeout", 504), (c.requests.RequestsError("private upstream detail"), "source_unavailable", 502)]:
+    with patch.object(c.requests.Session, "get", side_effect=failure):
+        try:
+            c.collect(source)
+            raise AssertionError("Transport error accepted")
+        except c.SourceError as error:
+            assert (error.code, error.status) == (code, status)
+            assert "private upstream" not in str(error)
