@@ -128,6 +128,15 @@ def collect(source):
     return {"sourceUrl": source, "html": html, "image": base64.b64encode(png).decode(), "imageType": "image/png", "fetchedAt": datetime.now(timezone.utc).isoformat()}
 
 
+def unique_object(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("Duplicate JSON field")
+        result[key] = value
+    return result
+
+
 class Handler(BaseHTTPRequestHandler):
     def setup(self):
         self.request.settimeout(10)
@@ -153,20 +162,23 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if self.path != "/collect":
             return self.reply(404, {"code": "not_found"})
-        if not SECRET or not hmac.compare_digest(self.headers.get("Authorization", "").encode(), f"Bearer {SECRET}".encode()):
+        if len(self.headers.get_all("Authorization", [])) != 1 or not SECRET or not hmac.compare_digest(self.headers.get("Authorization", "").encode(), f"Bearer {SECRET}".encode()):
             return self.reply(401, {"code": "unauthorized"})
         if len(self.headers.get_all("Content-Length", [])) != 1 or self.headers.get_all("Transfer-Encoding"):
             return self.reply(400, {"code": "invalid_body"})
         if len(self.headers.get_all("Content-Type", [])) != 1 or self.headers.get("Content-Type", "").split(";", 1)[0].strip().lower() != "application/json":
             return self.reply(415, {"code": "invalid_content_type"})
         try:
-            size = int(self.headers.get("Content-Length", "0"))
+            length = self.headers.get("Content-Length", "")
+            if not re.fullmatch(r"[0-9]+", length):
+                return self.reply(400, {"code": "invalid_body"})
+            size = int(length)
             if not 0 < size <= 2048 or self.headers.get("Transfer-Encoding"):
                 return self.reply(413, {"code": "invalid_body"})
             body = self.rfile.read(size)
             if len(body) != size:
                 return self.reply(400, {"code": "invalid_body"})
-            data = json.loads(body)
+            data = json.loads(body, object_pairs_hook=unique_object)
             if not isinstance(data, dict):
                 return self.reply(400, {"code": "invalid_body"})
             self.reply(200, collect(data.get("sourceUrl")))

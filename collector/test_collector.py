@@ -61,7 +61,7 @@ c.SECRET = "test-only-collector-secret-1234567890"
 server = c.Server(("127.0.0.1", 0), c.Handler)
 threading.Thread(target=server.serve_forever, daemon=True).start()
 try:
-    for body, auth, expected in [(b"{}", "", 401), (b"x" * 2049, c.SECRET, 413), (b"[1]", c.SECRET, 400), (b"{}", c.SECRET, 400)]:
+    for body, auth, expected in [(b"{}", "", 401), (b"x" * 2049, c.SECRET, 413), (b"[1]", c.SECRET, 400), (b"{}", c.SECRET, 400), (b'{"sourceUrl":"first","sourceUrl":"second"}', c.SECRET, 400)]:
         req = urllib.request.Request(f"http://127.0.0.1:{server.server_port}/collect", data=body, headers={"Authorization": f"Bearer {auth}", "Content-Type": "application/json"})
         try:
             urllib.request.urlopen(req)
@@ -70,6 +70,8 @@ try:
             assert e.code == expected, e.code
             assert json.load(e)["code"]
     for headers, expected in [
+        ([("Authorization", f"Bearer {c.SECRET}"), ("Content-Length", "2"), ("Content-Type", "application/json")], 401),
+        ([("Content-Length", "+2"), ("Content-Type", "application/json")], 400),
         ([("Content-Length", "2"), ("Content-Length", "2"), ("Content-Type", "application/json")], 400),
         ([("Content-Length", "2"), ("Transfer-Encoding", "chunked"), ("Content-Type", "application/json")], 400),
         ([("Content-Length", "2"), ("Content-Type", "text/plain")], 415),
