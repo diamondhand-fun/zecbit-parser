@@ -1,6 +1,11 @@
+![Diamond Hand](assets/banner.png)
+
 # Zecbit Parser
 
 **Zecbit item HTML → structured NFT metadata. Built by Diamond Hand.**
+
+Related: [NFT Radar](https://github.com/diamondhand-fun/nft-radar) traces token
+launches back to their source NFT references.
 
 A standalone extraction of the metadata parser used in Diamond Hand's NFT
 import flow. One runtime dependency, no browser, no wallet, no credentials.
