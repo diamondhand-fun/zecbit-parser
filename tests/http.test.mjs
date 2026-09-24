@@ -54,3 +54,19 @@ test("a stalled cancellation cannot hide the size-limit failure", async () => {
     assert.equal(body.locked, false);
   } finally { clearTimeout(timer); }
 });
+
+
+test("abort stalled reads, preserve the reason and release the stream", async () => {
+  const controller = new AbortController();
+  const reason = new Error("stop reading");
+  let cancelled;
+  const body = new ReadableStream({ cancel(value) { cancelled = value; return new Promise(() => {}); } });
+  const pending = readText(new Response(body), 100, { signal: controller.signal });
+  controller.abort(reason);
+  await assert.rejects(pending, error => error === reason);
+  assert.equal(cancelled, reason);
+  assert.equal(body.locked, false);
+  const untouched = new Response("hello");
+  await assert.rejects(readText(untouched, 100, { signal: controller.signal }), error => error === reason);
+  assert.equal(await untouched.text(), "hello");
+});

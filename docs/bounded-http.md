@@ -22,7 +22,8 @@ Network/read errors propagate unchanged. Invalid UTF-8 follows the standard
 TextDecoder replacement behavior; an absent body throws and an empty stream
 returns an empty string.
 
-Use a timeout or abort signal on the surrounding fetch: a byte limit does not
-limit elapsed time. Peak allocation can include the next upstream chunk even
+Pass `{ signal: AbortSignal.timeout(5000) }` as the third argument to bound
+read time, including stalled streams. Caller cancellation preserves its reason
+and releases the reader. A byte limit alone does not limit elapsed time. Peak allocation can include the next upstream chunk even
 if that chunk exceeds the limit. Do not pass arbitrary user-chosen limits.
 This helper does not validate JSON schemas, URLs, authorization or content types.
