@@ -67,3 +67,8 @@ The Node fetch command additionally terminates the collector after 25 seconds.
 When all connection slots are occupied, the server returns an empty 503
 with `Retry-After: 5`. Tests cover mocked error paths and actual libcurl transfers against
 a temporary local HTTP server. No live scraping is needed to test changes.
+
+PNG validation also rejects unknown critical chunks, interrupted IDAT sequences,
+and invalid or misplaced indexed-color palettes, following the
+[PNG critical chunk rules](https://www.w3.org/TR/png-3/#11PLTE). It checks the
+container structure and CRCs, without decompressing the pixel stream.

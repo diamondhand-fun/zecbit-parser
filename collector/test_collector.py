@@ -157,3 +157,26 @@ finally:
     upstream.server_close()
 
 print("Collector checks passed: auth, bounds, source status, image headers, cleanup and real libcurl callback limits.")
+
+# Critical chunk order and indexed-color palettes follow the PNG specification.
+indexed = png[:8] + png_chunk(b"IHDR", c.struct.pack(">IIBBBBB", 1, 1, 1, 3, 0, 0, 0))
+palette = png_chunk(b"PLTE", b"\xff\0\0")
+pixels = png_chunk(b"IDAT", c.zlib.compress(b"\0\0"))
+end = png_chunk(b"IEND", b"")
+c.validate_png(indexed + palette + pixels + end)
+c.validate_png(png[:33] + png_chunk(b"IDAT", b"") + png[33:])
+for bad in [
+    indexed + pixels + end,
+    indexed + palette + palette + pixels + end,
+    indexed + png_chunk(b"PLTE", b"x" * 9) + pixels + end,
+    png[:33] + png_chunk(b"PLTE", b"x") + png[33:],
+    png[:-12] + palette + end,
+    png[:-12] + png_chunk(b"tEXt", b"key\0value") + pixels + end,
+    png[:33] + png_chunk(b"ABCD", b"") + png[33:],
+    png[:33] + png_chunk(b"1BAD", b"") + png[33:],
+]:
+    try:
+        c.validate_png(bad)
+        raise AssertionError("Invalid critical PNG structure accepted")
+    except c.SourceError as error:
+        assert error.code == "invalid_image"

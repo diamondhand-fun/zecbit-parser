@@ -67,11 +67,14 @@ def validate_png(png):
     if len(png) < 33 or png[:8] != b"\x89PNG\r\n\x1a\n":
         raise SourceError("invalid_image")
     offset, has_data = 8, False
+    palette = idat_started = idat_closed = False
     while offset < len(png):
         if len(png) - offset < 12:
             raise SourceError("invalid_image")
         size = struct.unpack(">I", png[offset:offset + 4])[0]
         kind = png[offset + 4:offset + 8]
+        if not re.fullmatch(b"[A-Za-z]{4}", kind) or kind[0] < 97 and kind not in (b"IHDR", b"PLTE", b"IDAT", b"IEND"):
+            raise SourceError("invalid_image")
         end = offset + 12 + size
         if end > len(png) or zlib.crc32(png[offset + 4:end - 4]) != struct.unpack(">I", png[end - 4:end])[0]:
             raise SourceError("invalid_image")
@@ -84,8 +87,17 @@ def validate_png(png):
                 raise SourceError("invalid_image")
         elif kind == b"IHDR":
             raise SourceError("invalid_image")
-        if kind == b"IDAT" and size:
-            has_data = True
+        if kind == b"PLTE":
+            if palette or idat_started or color in (0, 4) or not 0 < size <= 768 or size % 3 or color == 3 and size // 3 > 2 ** depth:
+                raise SourceError("invalid_image")
+            palette = True
+        if kind == b"IDAT":
+            if idat_closed or color == 3 and not palette:
+                raise SourceError("invalid_image")
+            idat_started = True
+            has_data = has_data or size > 0
+        elif idat_started:
+            idat_closed = True
         if kind == b"IEND":
             if size or end != len(png) or not has_data:
                 raise SourceError("invalid_image")
