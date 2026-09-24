@@ -48,7 +48,8 @@ console.log(item.name, item.attributes);
 The offline JavaScript parser needs only Node.js and `npm ci`:
 
 ```sh
-npm run --silent parse -- https://zecbit.net/item/example/42 < tests/item.html
+npm run --silent parse -- https://zecbit.net/item/example/42 tests/item.html
+# Piped input is also supported; use --help for usage.
 ```
 
 ```json

@@ -66,3 +66,16 @@ test("truncate traits at Unicode code point boundaries", () => {
   assert.equal(item.attributes[0].trait, "a".repeat(127) + "💎");
   assert.equal(item.attributes[0].value, "b".repeat(255) + "💎");
 });
+
+
+test("CLI accepts HTML files and provides help without stdin", () => {
+  const cli = new URL("../src/cli.mjs", import.meta.url).pathname;
+  const fromFile = spawnSync(process.execPath, [cli, source, new URL("./item.html", import.meta.url).pathname], { encoding: "utf8" });
+  assert.equal(fromFile.status, 0, fromFile.stderr);
+  assert.equal(JSON.parse(fromFile.stdout).itemId, "42");
+  for (const path of [cli, new URL("../src/fetch-cli.mjs", import.meta.url).pathname]) {
+    const help = spawnSync(process.execPath, [path, "--help"], { encoding: "utf8" });
+    assert.equal(help.status, 0);
+    assert.match(help.stdout, /Usage:/);
+  }
+});
