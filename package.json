@@ -5,12 +5,36 @@
   "description": "Bounded, offline Zecbit NFT metadata parsing by Diamond Hand",
   "type": "module",
   "exports": {
-    ".": "./src/index.mjs",
-    "./quota": "./src/quota.mjs",
-    "./http": "./src/http.mjs",
-    "./fetch": "./src/fetch.mjs"
+    ".": {
+      "types": "./src/index.d.mts",
+      "import": "./src/index.mjs"
+    },
+    "./quota": {
+      "types": "./src/quota.d.mts",
+      "import": "./src/quota.mjs"
+    },
+    "./http": {
+      "types": "./src/http.d.mts",
+      "import": "./src/http.mjs"
+    },
+    "./fetch": {
+      "types": "./src/fetch.d.mts",
+      "import": "./src/fetch.mjs"
+    }
   },
-  "scripts": { "test": "node --test", "parse": "node src/cli.mjs", "fetch": "node src/fetch-cli.mjs" },
-  "engines": { "node": ">=22" },
-  "dependencies": { "linkedom": "0.18.13" }
+  "scripts": {
+    "test": "node --test && tsc",
+    "parse": "node src/cli.mjs",
+    "fetch": "node src/fetch-cli.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "linkedom": "0.18.13"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  },
+  "types": "./src/index.d.mts"
 }

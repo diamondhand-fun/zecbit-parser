@@ -118,3 +118,6 @@ CI runs the Node checks plus collector checks against a local HTTP source.
 See [validation notes](docs/validation.md) for live checks and exact boundaries.
 
 Maintained by [Diamond Hand](https://github.com/diamondhand-fun).
+
+TypeScript declarations are included for the parser, fetch, HTTP and quota
+exports. `npm test` also checks the public package imports and quota narrowing.
