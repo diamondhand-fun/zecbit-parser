@@ -21,6 +21,10 @@ test("collector subprocess integration: canonical source, timestamp, errors and 
     assert.equal(item.fetchedAt, data.fetchedAt);
     await program(`console.log(${JSON.stringify(JSON.stringify({ ...data, sourceUrl: sourceUrl + "0" }))});`);
     await assert.rejects(fetchNft(sourceUrl), /Invalid collector response/);
+    for (const bad of ["not JSON", "null", "[]", JSON.stringify({ ...data, fetchedAt: 1 }), JSON.stringify({ ...data, html: null }), JSON.stringify({ ...data, fetchedAt: "2026-01-01" })]) {
+      await program(`console.log(${JSON.stringify(bad)});`);
+      await assert.rejects(fetchNft(sourceUrl), /^Error: Invalid collector response\.$/);
+    }
     await program('console.error("source_blocked"); process.exit(1);');
     await assert.rejects(fetchNft(sourceUrl), /^Error: source_blocked$/);
     await program('console.error("sensitive process details"); process.exit(1);');

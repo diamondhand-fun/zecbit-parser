@@ -18,7 +18,8 @@ export async function fetchNft(value) {
     if (error.code === "ENOENT") throw new Error("Install the Python collector dependencies or set ZECBIT_PYTHON.");
     throw new Error("Collector failed or exceeded its resource limit.");
   }
-  const data = JSON.parse(stdout);
-  if (data.sourceUrl !== sourceUrl || !Number.isFinite(Date.parse(data.fetchedAt))) throw new Error("Invalid collector response.");
+  let data;
+  try { data = JSON.parse(stdout); } catch { throw new Error("Invalid collector response."); }
+  if (!data || data.sourceUrl !== sourceUrl || typeof data.html !== "string" || typeof data.fetchedAt !== "string" || !/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/.test(data.fetchedAt) || !Number.isFinite(Date.parse(data.fetchedAt))) throw new Error("Invalid collector response.");
   return { ...parseZecbit(data.html, sourceUrl), fetchedAt: data.fetchedAt };
 }
