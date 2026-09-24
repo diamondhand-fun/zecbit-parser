@@ -54,3 +54,8 @@ When the source blocks requests, set the shared state's `pausedUntil` to
 `now + importLimits.failureMs`. Pause and lease deadlines survive UTC-day
 resets; request and fresh counters reset. Wallet authentication, persistence,
 lease completion and circuit-breaker storage remain the caller's responsibility.
+
+Persisted state fails closed on inconsistent UTC buckets, out-of-range counters
+or missing lease ownership. Use `undefined` only for a genuinely absent record;
+`null`, `false` and malformed stored data are errors rather than quota resets.
+Lease completion rejects clock rollback instead of refunding against stale time.

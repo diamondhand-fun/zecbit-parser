@@ -87,3 +87,14 @@ test("upstream responses report the shared budget rather than wallet limits", ()
   assert.deepEqual(result.quota, { upstreamRemaining: 99, resetsAt: Date.parse("2027-01-16T00:00:00Z") });
   assert.equal("freshRemaining" in result.quota, false);
 });
+
+
+test("fail closed on corrupt persisted buckets, counters and lease ownership", () => {
+  const state = advanceQuota(undefined, "fresh", now, "owner").state;
+  for (const bad of [null, false, 0, "", [], { ...state, day: state.day + 1 }, { ...state, minute: Number.MAX_SAFE_INTEGER }, { ...state, requests: 101 }, { ...state, minuteRequests: 1 }, { ...state, lease: undefined }, { ...state, lease: {} }]) {
+    assert.throws(() => advanceQuota(bad, "request", now, ""), /saved quota state/);
+    assert.throws(() => finishQuota(bad, "owner", { now }), /saved quota state/);
+  }
+  assert.throws(() => finishQuota(state, "owner", { refund: true, now: now - 60_000 }), /quota completion/);
+  assert.equal(finishQuota(undefined, "owner", { now }), undefined);
+});

@@ -1,6 +1,13 @@
 function validateState(saved) {
-  if (saved && !["day", "minute", "requests", "minuteRequests", "fresh", "leaseUntil", "nextStart", "pausedUntil"].every(key => Number.isSafeInteger(saved[key]) && saved[key] >= 0)) throw new Error("Invalid saved quota state.");
+  if (saved === undefined) return;
+  if (!saved || typeof saved !== "object" || Array.isArray(saved) ||
+      !["day", "minute", "requests", "minuteRequests", "fresh", "leaseUntil", "nextStart", "pausedUntil"].every(key => Number.isSafeInteger(saved[key]) && saved[key] >= 0) ||
+      saved.minute > Math.floor(Number.MAX_SAFE_INTEGER / 60_000) || saved.day !== Math.floor(saved.minute / 1440) ||
+      saved.requests > importLimits.day || saved.minuteRequests > importLimits.minute || saved.minuteRequests > saved.requests || saved.fresh > importLimits.upstreamDay ||
+      saved.lease !== undefined && (typeof saved.lease !== "string" || !saved.lease || saved.lease.length > 128) || saved.leaseUntil > 0 && saved.lease === undefined)
+    throw new Error("Invalid saved quota state.");
 }
+
 const importLimits = Object.freeze({ minute: 10, day: 100, fresh: 5, upstreamDay: 100, leaseMs: 3e4, cooldownMs: 2e4, failureMs: 5 * 6e4 });
 function advanceQuota(saved, kind, now, lease) {
   if (!["request", "fresh", "upstream"].includes(kind) || !Number.isSafeInteger(now) || now < 0 || now > Number.MAX_SAFE_INTEGER - 864e5 || kind === "fresh" && (typeof lease !== "string" || !lease || lease.length > 128)) throw new Error("Invalid quota operation.");
@@ -48,7 +55,7 @@ export {
 
 export function finishQuota(saved, lease, { refund = false, now = Date.now() } = {}) {
   validateState(saved);
-  if (typeof lease !== "string" || !lease || typeof refund !== "boolean" || !Number.isSafeInteger(now) || now < 0) throw new Error("Invalid quota completion.");
+  if (typeof lease !== "string" || !lease || typeof refund !== "boolean" || !Number.isSafeInteger(now) || now < 0 || now > Number.MAX_SAFE_INTEGER - 864e5 || saved && now < saved.minute * 60_000) throw new Error("Invalid quota completion.");
   if (!saved || saved.lease !== lease) return saved;
   return { ...saved, lease: undefined, leaseUntil: 0,
     fresh: refund && saved.day === Math.floor(now / 86_400_000) ? Math.max(0, saved.fresh - 1) : saved.fresh };
