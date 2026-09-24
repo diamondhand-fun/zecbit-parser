@@ -1,0 +1,11 @@
+{
+  "name": "@diamondhand-fun/zecbit-parser",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Bounded, offline Zecbit NFT metadata parsing by Diamond Hand",
+  "type": "module",
+  "exports": "./src/index.mjs",
+  "scripts": { "test": "node --test", "parse": "node src/cli.mjs" },
+  "engines": { "node": ">=22" },
+  "dependencies": { "linkedom": "0.18.13" }
+}
