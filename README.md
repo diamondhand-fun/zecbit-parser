@@ -56,7 +56,7 @@ The offline JavaScript parser needs only Node.js and `npm ci`:
 
 ```sh
 npm run --silent parse -- https://zecbit.net/item/example/42 tests/item.html
-# Piped input is also supported; use --help for usage.
+# Piped input is also supported; omit html-file or pass - for stdin.
 ```
 
 ```json

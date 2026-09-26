@@ -10,6 +10,12 @@ import { parseZecbit, zecbitItem, MAX_HTML_BYTES, ParserError } from "../src/ind
 const html = readFileSync(new URL("./item.html", import.meta.url), "utf8");
 const source = "https://zecbit.net/item/example/42";
 
+test("CLI accepts an explicit stdin marker", () => {
+  const result = spawnSync(process.execPath, [new URL("../src/cli.mjs", import.meta.url).pathname, source, "-"], { input: html, encoding: "utf8" });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(JSON.parse(result.stdout).itemId, "42");
+});
+
 test("CLI rejects malformed UTF-8 from both stdin and files", async () => {
   const cli = new URL("../src/cli.mjs", import.meta.url).pathname;
   const directory = await mkdtemp(join(tmpdir(), "parser-utf8-"));

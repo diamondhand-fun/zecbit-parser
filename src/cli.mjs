@@ -9,7 +9,7 @@ try {
   else {
     if (positionals.length < 1 || positionals.length > 2) throw new Error(usage);
     const source = zecbitItem(positionals[0]).sourceUrl;
-    const input = positionals[1] ? createReadStream(positionals[1]) : process.stdin;
+    const input = positionals[1] && positionals[1] !== "-" ? createReadStream(positionals[1]) : process.stdin;
     if (input.isTTY) throw new Error("Pass an HTML file or pipe HTML on stdin.");
     const chunks = [];
     let size = 0;
