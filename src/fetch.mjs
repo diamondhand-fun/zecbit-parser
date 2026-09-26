@@ -27,6 +27,7 @@ export async function fetchNft(value, { signal, timeoutMs = 25_000, includeImage
   let data;
   try { data = JSON.parse(stdout); } catch { throw new Error("Invalid collector response."); }
   if (!data || data.sourceUrl !== sourceUrl || typeof data.html !== "string" || typeof data.fetchedAt !== "string" || !/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/.test(data.fetchedAt) || !Number.isFinite(Date.parse(data.fetchedAt))) throw new Error("Invalid collector response.");
+  if (new Date(data.fetchedAt.slice(0, 10)).toISOString().slice(0, 10) !== data.fetchedAt.slice(0, 10)) throw new Error("Invalid collector response.");
   const item = { ...parseZecbit(data.html, sourceUrl), fetchedAt: data.fetchedAt };
   if (!includeImage) return item;
   if (data.imageType !== "image/png" || typeof data.image !== "string" || data.image.length > 1_333_336) throw new Error("Invalid collector image.");

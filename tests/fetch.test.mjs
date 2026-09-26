@@ -36,6 +36,14 @@ test("collector subprocess integration: canonical source, timestamp, errors and 
     await assert.rejects(fetchNft(sourceUrl, { includeImage: "yes" }), /boolean/);
     await program(`console.log(${JSON.stringify(JSON.stringify({ ...data, sourceUrl: sourceUrl + "0" }))});`);
     await assert.rejects(fetchNft(sourceUrl), /Invalid collector response/);
+    for (const fetchedAt of ["2026-02-30T00:00:00Z", "2025-02-29T12:00:00+03:00", "2026-04-31T23:00:00-02:00"]) {
+      await program(`console.log(${JSON.stringify(JSON.stringify({ ...data, fetchedAt }))});`);
+      await assert.rejects(fetchNft(sourceUrl), /Invalid collector response/);
+    }
+    for (const fetchedAt of ["2024-02-29T00:00:00.123456+03:00", "2026-01-31T23:00:00-02:00"]) {
+      await program(`console.log(${JSON.stringify(JSON.stringify({ ...data, fetchedAt }))});`);
+      assert.equal((await fetchNft(sourceUrl)).fetchedAt, fetchedAt);
+    }
     for (const bad of ["not JSON", "null", "[]", JSON.stringify({ ...data, fetchedAt: 1 }), JSON.stringify({ ...data, html: null }), JSON.stringify({ ...data, fetchedAt: "2026-01-01" })]) {
       await program(`console.log(${JSON.stringify(bad)});`);
       await assert.rejects(fetchNft(sourceUrl), /^Error: Invalid collector response\.$/);
