@@ -10,6 +10,11 @@ import { parseZecbit, zecbitItem, MAX_HTML_BYTES, ParserError } from "../src/ind
 const html = readFileSync(new URL("./item.html", import.meta.url), "utf8");
 const source = "https://zecbit.net/item/example/42";
 
+test("retain NFT traits when optional tbody tags are omitted", () => {
+  const page = html.replaceAll("<tbody>", "").replaceAll("</tbody>", "");
+  assert.deepEqual(parseZecbit(page, source).attributes, parseZecbit(html, source).attributes);
+});
+
 test("resolve relative references against the document base URL", () => {
   const page = base => html.replace("</head>", `<base href="${base}"></head>`);
   assert.throws(() => parseZecbit(page("https://other.test/"), source), error => error.code === "invalid_metadata");

@@ -45,7 +45,7 @@ export function parseZecbit(html, source) {
   });
   if (!name || !collection || !image || name.length > 256 || collection.length > 256)
     throw new ParserError("Zecbit did not return a readable NFT. Try again later.", "invalid_metadata");
-  const attributes = Array.from(main.querySelectorAll("table tbody tr")).slice(0, 64).flatMap((row) => {
+  const attributes = Array.from(main.querySelectorAll("table tr")).slice(0, 64).flatMap((row) => {
     const cells = row.querySelectorAll("td");
     const trait = Array.from(cells[0]?.textContent?.trim() ?? "").slice(0, 128).join("");
     const value = Array.from(cells[1]?.textContent?.trim() ?? "").slice(0, 256).join("");
