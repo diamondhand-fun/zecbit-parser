@@ -2,10 +2,34 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
+import { mkdtemp, writeFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { parseZecbit, zecbitItem, MAX_HTML_BYTES, ParserError } from "../src/index.mjs";
 
 const html = readFileSync(new URL("./item.html", import.meta.url), "utf8");
 const source = "https://zecbit.net/item/example/42";
+
+test("CLI rejects malformed UTF-8 from both stdin and files", async () => {
+  const cli = new URL("../src/cli.mjs", import.meta.url).pathname;
+  const directory = await mkdtemp(join(tmpdir(), "parser-utf8-"));
+  const file = join(directory, "item.html");
+  try {
+    for (const invalid of [Buffer.from([0xff]), Buffer.from([0xe2, 0x82])]) {
+      const bytes = Buffer.concat([Buffer.from(html.replace("Example #42", "Example 💎")), invalid]);
+      await writeFile(file, bytes);
+      for (const args of [[source], [source, file]]) {
+        const result = spawnSync(process.execPath, [cli, ...args], { input: bytes, encoding: "utf8" });
+        assert.equal(result.status, 1);
+        assert.equal(result.stdout, "");
+        assert.match(result.stderr, /encoded data|encoding|UTF-8/i);
+      }
+    }
+    const result = spawnSync(process.execPath, [cli, source], { input: html.replace("Example #42", "Example 💎"), encoding: "utf8" });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(JSON.parse(result.stdout).name, "Example 💎");
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
 
 test("parse metadata, entities and canonical identity", () => {
   const { fetchedAt, ...item } = parseZecbit(html, source + "?ref=test#top");

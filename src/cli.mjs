@@ -18,7 +18,7 @@ try {
       if (size > MAX_HTML_BYTES) throw new Error("HTML exceeds 2 MB.");
       chunks.push(chunk);
     }
-    console.log(JSON.stringify(parseZecbit(Buffer.concat(chunks).toString("utf8"), source), null, 2));
+    console.log(JSON.stringify(parseZecbit(new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(chunks)), source), null, 2));
   }
 } catch (error) {
   console.error(error.message);
