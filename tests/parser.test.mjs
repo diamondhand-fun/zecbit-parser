@@ -10,6 +10,16 @@ import { parseZecbit, zecbitItem, MAX_HTML_BYTES, ParserError } from "../src/ind
 const html = readFileSync(new URL("./item.html", import.meta.url), "utf8");
 const source = "https://zecbit.net/item/example/42";
 
+test("resolve relative references against the document base URL", () => {
+  const page = base => html.replace("</head>", `<base href="${base}"></head>`);
+  assert.throws(() => parseZecbit(page("https://other.test/"), source), error => error.code === "invalid_metadata");
+  const relative = page("https://zecbit.net/api/").replace("/api/art/example/42", "art/example/42");
+  assert.equal(parseZecbit(relative, source).imageUrl, "https://zecbit.net/api/art/example/42");
+  const canonical = page("https://other.test/").replace("</head>", '<link rel="canonical" href="/item/example/42"></head>');
+  assert.throws(() => parseZecbit(canonical, source), error => error.code === "source_mismatch");
+  assert.throws(() => parseZecbit(page("http://["), source), error => error.code === "invalid_metadata");
+});
+
 test("CLI accepts an explicit stdin marker", () => {
   const result = spawnSync(process.execPath, [new URL("../src/cli.mjs", import.meta.url).pathname, source, "-"], { input: html, encoding: "utf8" });
   assert.equal(result.status, 0, result.stderr);
